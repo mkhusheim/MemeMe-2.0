@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  MemeEditorViewController.swift
 //  MemeMe 1.0
 //
 //  Created by Meemi on 23/05/2021.
@@ -7,15 +7,7 @@
 
 import UIKit
 
-// Meme structure
-struct Meme {
-    var topText: String
-    var bottomText: String
-    var originalImage: UIImage
-    var memedImage: UIImage
-}
-
-class ViewController: UIViewController, UINavigationControllerDelegate {
+class MemeEditorViewController: UIViewController, UINavigationControllerDelegate {
     
     // IBOutlets
     
@@ -33,14 +25,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
         NSAttributedString.Key.strokeColor: UIColor.black,
         NSAttributedString.Key.foregroundColor: UIColor.white,
         NSAttributedString.Key.font: UIFont(name: "HelveticaNeue-CondensedBlack", size: 40)!,
-        NSAttributedString.Key.strokeWidth:  1.0
+        NSAttributedString.Key.strokeWidth:  -3.5
     ]
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Text field delegates
-        topTextField.delegate = self
-        bottomTextField.delegate = self
         // Disable share button
         shareBtn.isEnabled = false
     }
@@ -48,30 +37,32 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         // Format text fields
-        topTextField.defaultTextAttributes = memeTextAttributes
-        bottomTextField.defaultTextAttributes = memeTextAttributes
+        prepareTextField(textField: topTextField, defaultText: "TOP")
+        prepareTextField(textField: bottomTextField, defaultText: "BOTTOM")
         // Disable camera if no camera in the device
         camButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
         // To shift screen for keyboard
-        subscribeToKeyboardNotifications()
+        //subscribeToKeyboardNotifications()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        unsubscribeFromKeyboardNotifications()
+        
     }
     @IBAction func albumPressed() {
-        // Launch photo library
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self
-        imagePicker.sourceType = .photoLibrary
-        present(imagePicker, animated: true, completion: nil)
+        // Pick image from photo library
+        pickImage(sourceType: .photoLibrary)
         
     }
     @IBAction func cameraPressed() {
-        
+        // Take a picture with camera
+        pickImage(sourceType: .camera)
+    }
+    
+    func pickImage(sourceType: UIImagePickerController.SourceType){
         let imagePicker = UIImagePickerController()
         imagePicker.delegate = self
+        imagePicker.sourceType = sourceType
         present(imagePicker, animated: true, completion: nil)
     }
     @IBAction func shareButtonPressed() {
@@ -79,12 +70,22 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
         save()
         // Launch activity view
         let activityView = UIActivityViewController(activityItems: [meme.memedImage], applicationActivities: nil)
+        activityView.completionWithItemsHandler = {(activity, completed, items, error) in
+            if (completed) {
+                self.save()
+                self.dismiss(animated:true,completion:nil)
+            }
+        }
         present(activityView, animated: true, completion: nil)
     }
-    
+    func prepareTextField(textField: UITextField, defaultText: String) {
+        textField.defaultTextAttributes = memeTextAttributes
+        textField.text = defaultText
+        
+    }
     func save() {
         // Create the meme
-        meme = Meme(topText: topTextField.text!, bottomText: bottomTextField.text!, originalImage: self.image.image!, memedImage: meme.memedImage)
+        meme = Meme(topText: topTextField.text!, bottomText: bottomTextField.text!, originalImage: self.image.image!, memedImage: generateMemedImage())
     }
     func generateMemedImage() -> UIImage {
         
@@ -108,7 +109,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
 
 // MARK: - UIImagePickerController Delegate
 
-extension ViewController: UIImagePickerControllerDelegate {
+extension MemeEditorViewController: UIImagePickerControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         // Dismiss Image Picker Controller
         dismiss(animated: true, completion: nil)
@@ -124,10 +125,13 @@ extension ViewController: UIImagePickerControllerDelegate {
 
 // MARK: - UITextField Delegate
 
-extension ViewController: UITextFieldDelegate {
+extension MemeEditorViewController: UITextFieldDelegate {
     // Begin editing with an empty field
     func textFieldDidBeginEditing(_ textField: UITextField) {
         textField.text = ""
+        if textField == bottomTextField {
+            subscribeToKeyboardNotifications()
+        }
     }
     // Dismiss keyboard
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -135,6 +139,7 @@ extension ViewController: UITextFieldDelegate {
     }
     // Did end editing with an empty field
     func textFieldDidEndEditing(_ textField: UITextField) {
+        unsubscribeFromKeyboardNotifications()
         if topTextField.text == "" {
             topTextField.text = "TOP"
         }
