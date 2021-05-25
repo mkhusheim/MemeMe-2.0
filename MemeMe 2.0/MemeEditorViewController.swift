@@ -66,12 +66,11 @@ class MemeEditorViewController: UIViewController, UINavigationControllerDelegate
         present(imagePicker, animated: true, completion: nil)
     }
     @IBAction func shareButtonPressed() {
-        // Save the meme function
-        save()
         // Launch activity view
         let activityView = UIActivityViewController(activityItems: [meme.memedImage], applicationActivities: nil)
         activityView.completionWithItemsHandler = {(activity, completed, items, error) in
             if (completed) {
+                // Save the meme function
                 self.save()
                 self.dismiss(animated:true,completion:nil)
             }
@@ -81,11 +80,16 @@ class MemeEditorViewController: UIViewController, UINavigationControllerDelegate
     func prepareTextField(textField: UITextField, defaultText: String) {
         textField.defaultTextAttributes = memeTextAttributes
         textField.text = defaultText
+        textField.textAlignment = .center
         
     }
     func save() {
         // Create the meme
         meme = Meme(topText: topTextField.text!, bottomText: bottomTextField.text!, originalImage: self.image.image!, memedImage: generateMemedImage())
+        // Add it to the memes array in the Application Delegate
+            let object = UIApplication.shared.delegate
+            let appDelegate = object as! AppDelegate
+            appDelegate.memes.append(meme)
     }
     func generateMemedImage() -> UIImage {
         

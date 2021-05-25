@@ -34,3 +34,17 @@ extension UIViewController {
         view.frame.origin.y = 0
     }
 }
+
+//extension UIView {
+//    func cellDetailsStyle(corners: UIRectCorner, radius: CGFloat) {
+//        let rectShape = CAShapeLayer()
+//           rectShape.bounds = self.frame
+//           rectShape.position = self.center
+//        
+//            rectShape.path = UIBezierPath(roundedRect: self.bounds, byRoundingCorners: [.bottomLeft ], cornerRadii: CGSize(width: 400, height: 400)).cgPath
+//        
+//           //Here I'm masking the textView's layer with rectShape layer
+//            self.layer.mask = rectShape
+//        
+//     }
+//}
